@@ -2,9 +2,19 @@
 Parser for Jupyter notebooks - extracts questions and code exercises.
 """
 import json
+import re
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Optional
+
+
+def _strip_exercise_hints(text: str) -> str:
+    """Remove duplicate 'Exercise N:' and function-name hints (e.g. min(), sorted()) from question text."""
+    # Remove "Exercise N: " prefix (app adds it)
+    text = re.sub(r"^Exercise\s+\d+:\s*", "", text, flags=re.IGNORECASE)
+    # Remove leading "func() - " or "func():" hint
+    text = re.sub(r"^\s*\w+\(\)\s*[-–:]?\s*", "", text)
+    return text.strip()
 
 
 @dataclass
@@ -118,11 +128,15 @@ def parse_notebook(filepath: Path) -> list[Exercise]:
             
             hint_code = _extract_code_from_markdown(source)
             
+            # Remove "Exercise N:" duplicate and function hints (e.g. min()) from title and instructions
+            clean_title = _strip_exercise_hints(title) if title else ""
+            clean_instructions = _strip_exercise_hints(source)
+            
             ex = Exercise(
                 topic=topic,
                 question_num=question_num,
-                title=title or f"Exercise {question_num}",
-                instructions=source,
+                title=clean_title or f"Exercise {question_num}",
+                instructions=clean_instructions,
                 hint_code=hint_code,
                 solution_code=next_code if next_code else None,
                 notebook_name=filepath.name
