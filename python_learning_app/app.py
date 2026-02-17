@@ -245,10 +245,9 @@ def render_notebook_exercises(notebook_dir: Path, exercises_by_topic: dict):
     ex = exercises[selected_idx]
     
     st.markdown("---")
-    st.subheader(f"Exercise {ex.question_num}: {ex.title}")
+    st.subheader(f"Exercise {ex.question_num}")
     
-    with st.container():
-        st.markdown(ex.instructions, unsafe_allow_html=True)
+    st.markdown(ex.instructions, unsafe_allow_html=True)
     
     if show_hints and ex.hint_code:
         with st.expander("📝 Example / Hint code"):
