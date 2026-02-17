@@ -96,10 +96,17 @@ def render_quiz(exercises_by_topic: dict):
         st.session_state.quiz_answered = {}
     
     # Build topic list: quiz topics + notebook topics, excluding Seaborn, Calc, Which Num
-    quiz_topics = set(q.topic for q in QUIZ_QUESTIONS)
-    notebook_topics = set(exercises_by_topic.keys()) if exercises_by_topic else set()
-    all_topics = quiz_topics | notebook_topics
-    topics = sorted(t for t in all_topics if not _is_quiz_topic_excluded(t))
+    # Deduplicate by normalized name (strip) to avoid "Control Flow" and "Control Flow " appearing twice
+    seen_normalized = set()
+    topics = []
+    all_raw = set(q.topic for q in QUIZ_QUESTIONS) | (set(exercises_by_topic.keys()) if exercises_by_topic else set())
+    for t in sorted(all_raw):
+        if _is_quiz_topic_excluded(t):
+            continue
+        key = t.strip().lower()
+        if key not in seen_normalized:
+            seen_normalized.add(key)
+            topics.append(t.strip() or t)
     
     topic_filter = st.sidebar.selectbox("Filter by topic", ["All"] + topics)
     
