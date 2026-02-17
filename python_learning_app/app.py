@@ -13,6 +13,9 @@ from .code_runner import run_restricted_code, is_code_allowed
 # Topics to exclude from the Quiz (per user preference)
 QUIZ_EXCLUDED_TOPICS = {"seaborn", "which num"}
 
+# Topics to exclude from Notebook Exercises (per user preference)
+NOTEBOOK_EXCLUDED_TOPICS = {"classes", "calc", "files", "seaborn", "loop through files"}
+
 
 def _is_quiz_topic_excluded(topic: str) -> bool:
     """Exclude Seaborn, Calc*, and Which Num from the quiz."""
@@ -24,6 +27,12 @@ def _is_quiz_topic_excluded(topic: str) -> bool:
     if "which num" in t:
         return True
     return False
+
+
+def _is_notebook_topic_excluded(topic: str) -> bool:
+    """Exclude Classes, Calc, Files, Seaborn, loop through files from Notebook Exercises."""
+    t = topic.strip().lower()
+    return t in NOTEBOOK_EXCLUDED_TOPICS or t.startswith("calc")
 
 # Page config
 st.set_page_config(
@@ -186,7 +195,11 @@ def render_quiz(exercises_by_topic: dict):
 
 def render_notebook_exercises(notebook_dir: Path, exercises_by_topic: dict):
     """Notebook-based exercises with filtered coding section."""
-    topics = sorted(exercises_by_topic.keys())
+    topics = sorted(t for t in exercises_by_topic.keys() if not _is_notebook_topic_excluded(t))
+    
+    if not topics:
+        st.warning("No topics available. Classes, Calc, Files, Seaborn, and loop through files are excluded.")
+        return
     
     st.sidebar.subheader("Topics")
     selected_topic = st.sidebar.selectbox(
