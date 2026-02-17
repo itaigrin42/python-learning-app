@@ -157,6 +157,10 @@ def render_quiz(exercises_by_topic: dict):
     elif st.sidebar.button("🔄 New questions"):
         questions = random.sample(questions_pool, n_show)
         st.session_state.quiz_questions = questions
+        # Clear answered state for the new questions so they appear fresh
+        for q in questions:
+            key = f"quiz_{hash(q.question)}"
+            st.session_state.quiz_answered.pop(key, None)
         st.rerun()
     else:
         questions = st.session_state.get("quiz_questions", random.sample(questions_pool, n_show))
