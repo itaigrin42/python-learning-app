@@ -384,28 +384,26 @@ def main():
         render_draft()
         return
     
-    with st.spinner("Loading your notebooks..."):
-        exercises_by_topic = load_all_exercises(notebook_dir) or {}
+    # Notebook Exercises load from app's built-in exercises (not user's notebooks)
+    notebook_exercises_dir = app_dir / "notebook_exercises"
+    with st.spinner("Loading exercises..."):
+        exercises_by_topic = load_all_exercises(notebook_exercises_dir) or {}
     
     if "Quiz" in mode:
         render_quiz(exercises_by_topic)
         return
     
-    # Notebook exercises
-    st.sidebar.markdown("**Practice from your notebooks**")
+    # Notebook exercises (built-in only)
+    st.sidebar.markdown("**Practice exercises**")
     
     if not exercises_by_topic:
-        st.error(f"No question notebooks found in `{notebook_dir}`. "
-                 "Add notebooks with 'Questions' or 'h.w' in the filename.")
-        st.info("Example: `Classes - Questions - h.w.ipynb`, `Seaborn - Questions.ipynb`")
+        st.error("No exercises found.")
         return
     
-    render_notebook_exercises(notebook_dir, exercises_by_topic)
+    render_notebook_exercises(notebook_exercises_dir, exercises_by_topic)
     
     st.sidebar.markdown("---")
-    st.sidebar.caption(f"Loaded from: `{notebook_dir.name}/`")
-    notebooks_found = discover_notebooks(notebook_dir)
-    st.sidebar.caption(f"{len(notebooks_found)} notebook(s) found")
+    st.sidebar.caption(f"{len(discover_notebooks(notebook_exercises_dir))} topic(s)")
 
 
 if __name__ == "__main__":
