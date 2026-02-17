@@ -95,15 +95,20 @@ def render_quiz(exercises_by_topic: dict):
     if "quiz_answered" not in st.session_state:
         st.session_state.quiz_answered = {}
     
+    def _normalize_topic(t: str) -> str:
+        """Normalize topic for deduplication (e.g., 'DataTypes' and 'Data Types' -> same)."""
+        s = t.strip().lower().replace("datatypes", "data types")
+        return s
+
     # Build topic list: quiz topics + notebook topics, excluding Seaborn, Calc, Which Num
-    # Deduplicate by normalized name (strip) to avoid "Control Flow" and "Control Flow " appearing twice
+    # Deduplicate by normalized name to avoid duplicates like "Control Flow"/"Control Flow " and "Variables & DataTypes"/"Variables & Data Types"
     seen_normalized = set()
     topics = []
     all_raw = set(q.topic for q in QUIZ_QUESTIONS) | (set(exercises_by_topic.keys()) if exercises_by_topic else set())
     for t in sorted(all_raw):
         if _is_quiz_topic_excluded(t):
             continue
-        key = t.strip().lower()
+        key = _normalize_topic(t)
         if key not in seen_normalized:
             seen_normalized.add(key)
             topics.append(t.strip() or t)
