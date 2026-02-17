@@ -155,6 +155,63 @@ QUIZ_QUESTIONS: list[QuizQuestion] = [
         topic="Data Structures",
         explanation="list() converts an iterable (like a string) into a list of its elements."
     ),
+    # Build-In Funcions (built-in functions - matches notebook topic name)
+    QuizQuestion(
+        question="What does sum([1, 2, 3, 4]) return?",
+        options=["10", "1234", "Error", "4"],
+        correct_index=0,
+        topic="Build-In Funcions",
+        explanation="sum() adds all elements in an iterable: 1+2+3+4 = 10."
+    ),
+    QuizQuestion(
+        question="What does range(5) produce?",
+        options=["[0,1,2,3,4]", "0,1,2,3,4", "A range object (0 to 4)", "[1,2,3,4,5]"],
+        correct_index=2,
+        topic="Build-In Funcions",
+        explanation="range(5) returns a range object that yields 0,1,2,3,4 when iterated."
+    ),
+    QuizQuestion(
+        question="What does max([3, 1, 4, 1, 5]) return?",
+        options=["1", "3", "5", "14"],
+        correct_index=2,
+        topic="Build-In Funcions",
+        explanation="max() returns the largest value in the iterable."
+    ),
+    QuizQuestion(
+        question="What does sorted([3, 1, 2]) return?",
+        options=["[3, 1, 2]", "[1, 2, 3]", "(1, 2, 3)", "Error"],
+        correct_index=1,
+        topic="Build-In Funcions",
+        explanation="sorted() returns a new list with elements in ascending order."
+    ),
+    QuizQuestion(
+        question="What does str(42) return?",
+        options=["42", "'42'", "Error", "42.0"],
+        correct_index=1,
+        topic="Build-In Funcions",
+        explanation="str() converts a value to a string: str(42) gives '42'."
+    ),
+    QuizQuestion(
+        question="What does round(3.7) return?",
+        options=["3", "4", "3.7", "3.0"],
+        correct_index=1,
+        topic="Build-In Funcions",
+        explanation="round() rounds to the nearest integer; 3.7 rounds to 4."
+    ),
+    QuizQuestion(
+        question="What does abs(-10) return?",
+        options=["-10", "10", "0", "Error"],
+        correct_index=1,
+        topic="Build-In Funcions",
+        explanation="abs() returns the absolute value (distance from zero)."
+    ),
+    QuizQuestion(
+        question="What does enumerate(['a','b']) produce when converted to list?",
+        options=["['a','b']", "[(0,'a'),(1,'b')]", "[0,1]", "Error"],
+        correct_index=1,
+        topic="Build-In Funcions",
+        explanation="enumerate() yields (index, value) pairs for each element."
+    ),
 ]
 
 def is_coding_safe_topic(topic: str) -> bool:
