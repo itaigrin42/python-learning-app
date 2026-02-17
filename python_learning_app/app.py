@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .notebook_parser import load_all_exercises, discover_notebooks
 from .quiz_questions import QUIZ_QUESTIONS, is_coding_safe_topic
-from .code_runner import run_restricted_code, is_code_allowed
+from .code_runner import run_restricted_code, is_code_allowed, explain_error
 
 # Topics to exclude from the Quiz (per user preference)
 QUIZ_EXCLUDED_TOPICS = {"seaborn", "which num"}
@@ -278,20 +278,25 @@ def render_notebook_exercises(notebook_dir: Path, exercises_by_topic: dict):
             placeholder="# Variables, functions, loops, lists, dicts only.\n# Example: x = 5; print(x * 2)"
         )
         
-        if user_code and st.button("Run code"):
-            allowed, reason = is_code_allowed(user_code)
-            if not allowed:
-                st.error(reason)
+        if st.button("▶ Run Code", type="primary"):
+            if not user_code or not user_code.strip():
+                st.warning("Please write some code first.")
             else:
-                success, output, error = run_restricted_code(user_code)
-                if success:
-                    if output:
-                        st.code(output, language=None)
-                    st.success("Code executed successfully!")
+                allowed, reason = is_code_allowed(user_code)
+                if not allowed:
+                    st.error(reason)
                 else:
-                    st.error(f"Error: {error}")
-                    if output:
-                        st.code(output, language=None)
+                    success, output, error = run_restricted_code(user_code)
+                    if success:
+                        if output:
+                            st.code(output, language=None)
+                        st.success("Code executed successfully!")
+                    else:
+                        explanation = explain_error(error)
+                        st.error(explanation, icon="⚠️")
+                        st.caption(f"Technical details: {error}")
+                        if output:
+                            st.code(output, language=None)
 
 
 def main():

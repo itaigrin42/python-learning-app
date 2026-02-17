@@ -105,3 +105,34 @@ def run_restricted_code(code: str) -> tuple[bool, str, str]:
         return False, captured.getvalue(), str(e)
     finally:
         sys.stdout = old_stdout
+
+
+def explain_error(error_msg: str) -> str:
+    """Convert Python error messages into clear, simple explanations."""
+    err = error_msg.lower()
+    if "nameerror" in err and "is not defined" in err:
+        # Extract variable name if possible
+        import re
+        m = re.search(r"name '([^']+)' is not defined", error_msg, re.I)
+        var = m.group(1) if m else "a variable"
+        return f"**Variable not defined:** You used '{var}' before giving it a value. Assign a value first, e.g. `{var} = 5`"
+    if "syntaxerror" in err:
+        return "**Syntax error:** Check for missing colons (`:`), parentheses `()`, brackets `[]`, or quotes. Make sure every opening symbol has a matching closing one."
+    if "indentationerror" in err:
+        return "**Indentation error:** Python uses spaces to group code. Lines that belong together (e.g. inside a loop) must be indented the same way. Use 4 spaces."
+    if "typeerror" in err and "unsupported operand" in err:
+        return "**Type error:** You're mixing incompatible types. For example, you can't add a string and a number. Use `str()` or `int()` to convert."
+    if "indexerror" in err and "out of range" in err:
+        return "**Index error:** You're accessing a position that doesn't exist in the list. Remember: the first item is at index 0, and the last is at `len(list)-1`."
+    if "keyerror" in err:
+        return "**Key error:** You're trying to access a key that doesn't exist in the dictionary. Use `.get()` for a safe default, or check if the key exists first."
+    if "zerodivisionerror" in err:
+        return "**Division by zero:** You can't divide by zero. Check that your divisor isn't 0."
+    if "valueerror" in err:
+        return "**Value error:** The value you're using isn't valid for this operation. For example, `int('hello')` fails because 'hello' isn't a number."
+    if "attributeerror" in err and "'nonetype'" in err:
+        return "**NoneType error:** You're calling a method on `None`. A function might have returned `None` instead of a value. Check your function's return statement."
+    if "attributeerror" in err:
+        return "**Attribute error:** You're trying to use a method or property that doesn't exist for this type. Check the spelling and that you're using the right type."
+    # Default: show original with a friendly intro
+    return f"**Error:** {error_msg}"
