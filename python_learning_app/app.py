@@ -34,6 +34,11 @@ def _is_notebook_topic_excluded(topic: str) -> bool:
     t = topic.strip().lower()
     return t in NOTEBOOK_EXCLUDED_TOPICS or t.startswith("calc")
 
+
+def _normalize_topic_for_dedup(topic: str) -> str:
+    """Normalize topic for deduplication (DataTypes/Data Types, trailing spaces)."""
+    return topic.strip().lower().replace("datatypes", "data types")
+
 # Page config
 st.set_page_config(
     page_title="Python Learning App",
@@ -195,17 +200,31 @@ def render_quiz(exercises_by_topic: dict):
 
 def render_notebook_exercises(notebook_dir: Path, exercises_by_topic: dict):
     """Notebook-based exercises with filtered coding section."""
-    topics = sorted(t for t in exercises_by_topic.keys() if not _is_notebook_topic_excluded(t))
+    # Deduplicate topics (Data Structures/Data Structures , Variables & Data Types/DataTypes)
+    merged: dict[str, list] = {}  # normalized_topic -> exercises
+    display_name: dict[str, str] = {}  # normalized_topic -> display name
+    for t in exercises_by_topic.keys():
+        if _is_notebook_topic_excluded(t):
+            continue
+        key = _normalize_topic_for_dedup(t)
+        if key not in merged:
+            merged[key] = []
+            display_name[key] = t.strip() or t
+        merged[key].extend(exercises_by_topic[t])
+    topics = sorted(display_name.values(), key=lambda x: x.lower())
     
     if not topics:
         st.warning("No topics available. Classes, Calc, Files, Seaborn, and loop through files are excluded.")
         return
     
+    # Map display name back to normalized key for lookup
+    name_to_key = {display_name[k]: k for k in display_name}
+    
     st.sidebar.subheader("Topics")
     selected_topic = st.sidebar.selectbox(
         "Choose a topic",
         options=topics,
-        format_func=lambda t: f"{t} ({len(exercises_by_topic[t])} exercises)"
+        format_func=lambda t: f"{t} ({len(merged[name_to_key[t]])} exercises)"
     )
     
     st.sidebar.markdown("---")
@@ -213,7 +232,7 @@ def render_notebook_exercises(notebook_dir: Path, exercises_by_topic: dict):
     show_hints = st.sidebar.checkbox("Show example code hints", value=True)
     
     st.title(f"📚 {selected_topic}")
-    exercises = exercises_by_topic[selected_topic]
+    exercises = merged[name_to_key[selected_topic]]
     
     ex_titles = [f"{e.question_num}. {e.title[:60]}{'...' if len(e.title) > 60 else ''}" 
                  for e in exercises]
