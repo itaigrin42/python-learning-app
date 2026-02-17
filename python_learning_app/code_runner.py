@@ -134,5 +134,72 @@ def explain_error(error_msg: str) -> str:
         return "**NoneType error:** You're calling a method on `None`. A function might have returned `None` instead of a value. Check your function's return statement."
     if "attributeerror" in err:
         return "**Attribute error:** You're trying to use a method or property that doesn't exist for this type. Check the spelling and that you're using the right type."
+    if "importerror" in err or "modulenotfounderror" in err:
+        return "**Import error:** A library you're trying to use isn't installed or can't be found. Make sure you've installed it with `pip install <library_name>`."
+    if "filenotfounderror" in err:
+        return "**File not found:** The file path you're using doesn't exist. Check the path and that the file is in the right location."
     # Default: show original with a friendly intro
     return f"**Error:** {error_msg}"
+
+
+def run_draft_code(code: str, streamlit_ctx) -> tuple[bool, str, str]:
+    """
+    Run code with full access to pandas, matplotlib, seaborn, etc.
+    For Draft mode. streamlit_ctx is the streamlit module for displaying plots.
+    Returns (success: bool, output: str, error: str).
+    """
+    import io
+    import sys
+
+    if not code or not code.strip():
+        return False, "", "Code is empty."
+
+    # Pre-import popular libraries
+    import pandas as pd
+    import numpy as np
+    import matplotlib
+    matplotlib.use("Agg")  # Non-interactive backend for server
+    import matplotlib.pyplot as plt
+    try:
+        import seaborn as sns
+        has_seaborn = True
+    except ImportError:
+        has_seaborn = False
+
+    # Build globals with common libraries
+    globals_dict = {
+        "__builtins__": __builtins__,
+        "pd": pd,
+        "pandas": pd,
+        "np": np,
+        "numpy": np,
+        "plt": plt,
+        "matplotlib": __import__("matplotlib"),
+    }
+    if has_seaborn:
+        globals_dict["sns"] = sns
+        globals_dict["seaborn"] = sns
+
+    # Make plt.show() display in Streamlit
+    def _show():
+        try:
+            fig = plt.gcf()
+            if fig.get_axes():
+                streamlit_ctx.pyplot(fig)
+            plt.close(fig)
+        except Exception:
+            pass
+
+    globals_dict["plt"].show = _show
+
+    old_stdout = sys.stdout
+    sys.stdout = captured = io.StringIO()
+
+    try:
+        exec(code, globals_dict)
+        output = captured.getvalue()
+        return True, output, ""
+    except Exception as e:
+        return False, captured.getvalue(), str(e)
+    finally:
+        sys.stdout = old_stdout

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .notebook_parser import load_all_exercises, discover_notebooks
 from .quiz_questions import QUIZ_QUESTIONS, is_coding_safe_topic
-from .code_runner import run_restricted_code, is_code_allowed, explain_error
+from .code_runner import run_restricted_code, run_draft_code, is_code_allowed, explain_error
 
 # Topics to exclude from the Quiz (per user preference)
 QUIZ_EXCLUDED_TOPICS = {"seaborn", "which num"}
@@ -299,6 +299,41 @@ def render_notebook_exercises(notebook_dir: Path, exercises_by_topic: dict):
                             st.code(output, language=None)
 
 
+def render_draft():
+    """Draft mode: write and run code with pandas, matplotlib, seaborn, etc."""
+    st.title("✏️ Draft")
+    st.caption("Write and run Python code. Includes pandas, numpy, matplotlib, seaborn, and more.")
+    
+    user_code = st.text_area(
+        "Write your code here",
+        height=250,
+        placeholder="""import pandas as pd
+import matplotlib.pyplot as plt
+
+# Your code here
+df = pd.DataFrame({'x': [1, 2, 3], 'y': [4, 5, 6]})
+plt.plot(df['x'], df['y'])
+plt.show()"""
+    )
+    
+    if st.button("▶ Run Code", type="primary", key="draft_run"):
+        if not user_code or not user_code.strip():
+            st.warning("Please write some code first.")
+        else:
+            with st.spinner("Running..."):
+                success, output, error = run_draft_code(user_code, st)
+            if success:
+                if output:
+                    st.code(output, language=None)
+                st.success("Code executed successfully!")
+            else:
+                explanation = explain_error(error)
+                st.error(explanation, icon="⚠️")
+                st.caption(f"Technical details: {error}")
+                if output:
+                    st.code(output, language=None)
+
+
 def main():
     app_dir = Path(__file__).parent
     notebook_dir = app_dir.parent
@@ -308,9 +343,13 @@ def main():
     
     mode = st.sidebar.radio(
         "Mode",
-        ["📋 Quiz (Multiple Choice)", "📚 Notebook Exercises"],
-        help="Quiz: American-style MC. Notebook: exercises from your .ipynb files."
+        ["📋 Quiz (Multiple Choice)", "📚 Notebook Exercises", "✏️ Draft"],
+        help="Quiz: MC questions. Notebook: exercises. Draft: write & run any code."
     )
+    
+    if "Draft" in mode:
+        render_draft()
+        return
     
     with st.spinner("Loading your notebooks..."):
         exercises_by_topic = load_all_exercises(notebook_dir) or {}
