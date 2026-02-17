@@ -2,6 +2,7 @@
 Python Learning App - Interactive practice from your Jupyter notebooks.
 American-style quiz + coding (no classes, files, or databases in coding section).
 """
+import re
 import random
 import streamlit as st
 from pathlib import Path
@@ -231,6 +232,20 @@ def render_quiz(exercises_by_topic: dict):
                 st.info(q.explanation)
 
 
+def _exercise_short_desc(e) -> str:
+    """Extract short question description from exercise (for dropdown)."""
+    # Skip "**Exercise N**" or "Exercise N" lines, get first meaningful line
+    lines = e.instructions.strip().split("\n")
+    for line in lines:
+        s = line.strip()
+        if not s:
+            continue
+        if re.match(r"^(\*\*)?Exercise\s+\d+(\*\*)?\s*$", s, re.I):
+            continue
+        return s[:70] + ("..." if len(s) > 70 else "")
+    return e.title[:70] + ("..." if len(e.title) > 70 else "")
+
+
 def render_notebook_exercises(notebook_dir: Path, exercises_by_topic: dict):
     """Notebook-based exercises with filtered coding section."""
     # Deduplicate topics (Data Structures/Data Structures , Variables & Data Types/DataTypes)
@@ -267,8 +282,7 @@ def render_notebook_exercises(notebook_dir: Path, exercises_by_topic: dict):
     st.title(f"📚 {selected_topic}")
     exercises = merged[name_to_key[selected_topic]]
     
-    ex_titles = [f"{e.question_num}. {e.title[:60]}{'...' if len(e.title) > 60 else ''}" 
-                 for e in exercises]
+    ex_titles = [f"{e.question_num}. {_exercise_short_desc(e)}" for e in exercises]
     selected_idx = st.selectbox(
         "Select exercise",
         range(len(exercises)),
