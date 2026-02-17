@@ -6,9 +6,9 @@ import random
 import streamlit as st
 from pathlib import Path
 
-from notebook_parser import load_all_exercises, discover_notebooks
-from quiz_questions import QUIZ_QUESTIONS, is_coding_safe_topic
-from code_runner import run_restricted_code, is_code_allowed
+from .notebook_parser import load_all_exercises, discover_notebooks
+from .quiz_questions import QUIZ_QUESTIONS, is_coding_safe_topic
+from .code_runner import run_restricted_code, is_code_allowed
 
 # Topics to exclude from the Quiz (per user preference)
 QUIZ_EXCLUDED_TOPICS = {"seaborn", "which num"}
