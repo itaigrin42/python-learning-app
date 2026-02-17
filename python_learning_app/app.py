@@ -147,25 +147,54 @@ def render_quiz(exercises_by_topic: dict):
     if "quiz_last_topic" not in st.session_state:
         st.session_state.quiz_last_topic = None
     
-    # How many questions to show: all if 8 or fewer, else 8 random
-    n_show = min(8, len(questions_pool)) if len(questions_pool) > 8 else len(questions_pool)
+    # Prefer unanswered questions when picking a new set
+    def _unanswered_pool():
+        return [q for q in questions_pool if f"quiz_{hash(q.question)}" not in st.session_state.quiz_answered]
+    
+    # How many questions to show: all if 15 or fewer, else 15 random
+    n_show = min(15, len(questions_pool)) if len(questions_pool) > 15 else len(questions_pool)
     
     if st.session_state.quiz_last_topic != topic_filter:
         st.session_state.quiz_last_topic = topic_filter
-        questions = random.sample(questions_pool, n_show)
+        st.session_state.quiz_empty_reason = None
+        unanswered = _unanswered_pool()
+        n = min(n_show, len(unanswered)) if unanswered else 0
+        questions = random.sample(unanswered, n) if n else []
         st.session_state.quiz_questions = questions
     elif st.sidebar.button("🔄 New questions"):
-        questions = random.sample(questions_pool, n_show)
-        st.session_state.quiz_questions = questions
-        # Clear answered state for the new questions so they appear fresh
-        for q in questions:
-            key = f"quiz_{hash(q.question)}"
-            st.session_state.quiz_answered.pop(key, None)
+        unanswered = _unanswered_pool()
+        current = st.session_state.get("quiz_questions", [])
+        seen = {q.question for q in current}
+        # Exclude currently shown questions so we get a fresh set
+        candidates = [q for q in unanswered if q.question not in seen]
+        if not candidates:
+            # All unanswered were just shown
+            st.session_state.quiz_questions = []
+            st.session_state.quiz_empty_reason = "seen_all"
+        else:
+            n = min(n_show, len(candidates))
+            questions = random.sample(candidates, n)
+            st.session_state.quiz_questions = questions
+            st.session_state.quiz_empty_reason = None
         st.rerun()
     else:
-        questions = st.session_state.get("quiz_questions", random.sample(questions_pool, n_show))
+        questions = st.session_state.get("quiz_questions")
+        if questions is None:
+            unanswered = _unanswered_pool()
+            n = min(n_show, len(unanswered)) if unanswered else 0
+            questions = random.sample(unanswered, n) if n else []
+            st.session_state.quiz_questions = questions
     
-    st.caption(f"Showing {len(questions)} of {len(questions_pool)} questions (random selection). Switch topic or click **New questions** for a different set.")
+    if not questions:
+        reason = st.session_state.get("quiz_empty_reason")
+        if reason == "seen_all":
+            st.info("You've seen all unanswered questions. Answer some to get more, or switch topics.")
+        else:
+            st.info("You've answered all questions in this topic. Switch to another topic or try **Notebook Exercises**.")
+    else:
+        st.session_state.quiz_empty_reason = None
+        unanswered_count = len(_unanswered_pool())
+        st.caption(f"Showing {len(questions)} of {unanswered_count} unanswered questions (random selection). Switch topic or click **New questions** for a different set.")
     
     labels = ["A", "B", "C", "D"]
     
