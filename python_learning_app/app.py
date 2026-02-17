@@ -116,8 +116,8 @@ def render_quiz(exercises_by_topic: dict):
     topic_filter = st.sidebar.selectbox("Filter by topic", ["All"] + topics)
     
     def _topic_matches(q_topic: str, filter_topic: str) -> bool:
-        """Match topics, normalizing whitespace and case."""
-        return q_topic.strip().lower() == filter_topic.strip().lower()
+        """Match topics, normalizing whitespace, case, and DataTypes/Data Types."""
+        return _normalize_topic(q_topic) == _normalize_topic(filter_topic)
     
     if topic_filter != "All":
         questions_pool = [q for q in QUIZ_QUESTIONS if _topic_matches(q.topic, topic_filter)]
